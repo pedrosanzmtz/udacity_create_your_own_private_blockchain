@@ -10,6 +10,7 @@
  */
 
 const SHA256 = require('crypto-js/sha256');
+const e = require('express');
 const hex2ascii = require('hex2ascii');
 
 class Block {
@@ -39,13 +40,19 @@ class Block {
         let self = this;
         return new Promise((resolve, reject) => {
             // Save in auxiliary variable the current block hash
-                                            
+            const currentHash = self.hash;
+            self.hash = null;                                 
             // Recalculate the hash of the Block
+            const recalcultedHash = SHA256(JSON.stringify(self)).toString();
+            self.hash = currentHash;  // restoring current hash value for future validations
             // Comparing if the hashes changed
+            if(recalcultedHash !== currentHash){
             // Returning the Block is not valid
-            
+                resolve(False);
             // Returning the Block is valid
-
+            }else{
+                resolve(True);
+            }   
         });
     }
 
@@ -59,12 +66,19 @@ class Block {
      *     or Reject with an error.
      */
     getBData() {
-        // Getting the encoded data saved in the Block
-        // Decoding the data to retrieve the JSON representation of the object
-        // Parse the data to an object to be retrieve.
-
-        // Resolve with the data if the object isn't the Genesis block
-
+        let self = this;
+        return new Promise((resolve, reject) => {
+            // Getting the encoded data saved in the Block
+            // Decoding the data to retrieve the JSON representation of the object
+            // Parse the data to an object to be retrieve.
+            const dataObject = JSON.parse(hex2ascii(this.body));
+            // Resolve with the data if the object isn't the Genesis block
+            if(this.height > 0){
+                resolve(dataObject);
+            }else{
+                reject(new Error("This is the Genesis Block"));
+            }
+        });
     }
 
 }
